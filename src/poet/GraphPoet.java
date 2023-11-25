@@ -3,11 +3,16 @@
  */
 package poet;
 
-import java.io.File;
-import java.io.IOException;
-
 import graph.Graph;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 /**
  * A graph-based poetry generator.
  * 
@@ -51,38 +56,63 @@ import graph.Graph;
  * class is up to you.
  */
 public class GraphPoet {
-    
-    private final Graph<String> graph = Graph.empty();
-    
-    // Abstraction function:
-    //   TODO
-    // Representation invariant:
-    //   TODO
-    // Safety from rep exposure:
-    //   TODO
-    
-    /**
-     * Create a new poet with the graph from corpus (as described above).
-     * 
-     * @param corpus text file from which to derive the poet's affinity graph
-     * @throws IOException if the corpus file cannot be found or read
-     */
+
+    private final Map<String, Map<String, Integer>> wordGraph = new HashMap<>();
+
     public GraphPoet(File corpus) throws IOException {
-        throw new RuntimeException("not implemented");
+        List<String> words = Files.readAllLines(corpus.toPath());
+        buildGraph(words);
     }
-    
-    // TODO checkRep
-    
-    /**
-     * Generate a poem.
-     * 
-     * @param input string from which to create the poem
-     * @return poem (as described above)
-     */
+
     public String poem(String input) {
-        throw new RuntimeException("not implemented");
+        List<String> inputWords = Arrays.asList(input.split("\\s+"));
+        StringBuilder poemBuilder = new StringBuilder();
+
+        for (int i = 0; i < inputWords.size() - 1; i++) {
+            String currentWord = inputWords.get(i).toLowerCase();
+            String nextWord = inputWords.get(i + 1).toLowerCase();
+
+            poemBuilder.append(inputWords.get(i)).append(" ");
+            String bridgeWord = findBridgeWord(currentWord, nextWord);
+            if (!bridgeWord.isEmpty()) {
+                poemBuilder.append(bridgeWord).append(" ");
+            }
+        }
+        poemBuilder.append(inputWords.get(inputWords.size() - 1));
+
+        return poemBuilder.toString();
     }
-    
-    // TODO toString()
-    
+
+    private String findBridgeWord(String word1, String word2) {
+        if (!wordGraph.containsKey(word1) || !wordGraph.containsKey(word2)) {
+            return "";
+        }
+
+        Map<String, Integer> connections = wordGraph.get(word1);
+        int maxWeight = 0;
+        String bridgeWord = "";
+
+        for (String word : connections.keySet()) {
+            if (wordGraph.containsKey(word) && wordGraph.get(word).containsKey(word2)) {
+                int weight = connections.get(word);
+                if (weight > maxWeight) {
+                    maxWeight = weight;
+                    bridgeWord = word;
+                }
+            }
+        }
+
+        return bridgeWord;
+    }
+
+    private void buildGraph(List<String> words) {
+        for (int i = 0; i < words.size() - 1; i++) {
+            String currentWord = words.get(i).toLowerCase();
+            String nextWord = words.get(i + 1).toLowerCase();
+
+            wordGraph.putIfAbsent(currentWord, new HashMap<>());
+            Map<String, Integer> connections = wordGraph.get(currentWord);
+            connections.put(nextWord, connections.getOrDefault(nextWord, 0) + 1);
+        }
+    }
 }
