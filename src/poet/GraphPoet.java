@@ -46,6 +46,7 @@ public class GraphPoet {
             String target = entry.getKey();
             int weight = entry.getValue();
 
+            
             if (graph.containsKey(target) && graph.get(target).containsKey(word2)) {
                 if (weight > maxWeight) {
                     maxWeight = weight;
